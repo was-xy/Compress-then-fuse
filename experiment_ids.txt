@@ -1,0 +1,178 @@
+EXPERIMENT ID REFERENCE
+=======================
+
+This file maps the 117 IDs defined in configs/experiments.py to their model
+configurations. It describes configurations, not measured results.
+
+How to read the columns
+-----------------------
+ID: integer passed to train.py --exp_id.
+Experiment name: name used by the configuration and output directory.
+Fusion: method used to combine the modalities (single for one source).
+TCM: whether the Temporal Compression Module is enabled.
+Window: full = no temporal cutoff; 3m = through day 91; 6m = through day 182.
+  Days are measured from the dataset reference date (2018-09-01). The cutoff
+  keeps dates on or before that day, including any earlier observations.
+  If a source has none, the nearest available acquisition is retained.
+
+Modality sets
+-------------
+S2: Sentinel-2 optical.
+S1A / S1D: ascending / descending Sentinel-1 SAR.
+N3: S2 + S1A + S1D (three separate model-facing sources).
+N5: N3 + S1ABcoh + S1DBcoh (five separate sources).
+hybrid: three model-facing sources: S2, S1A with its coherence channels,
+  and S1D with its coherence channels. Coherence is resampled to the
+  corresponding SAR acquisition dates before channel concatenation.
+
+Fusion methods
+--------------
+single: one modality; no cross-modal fusion.
+early: resample sources to the S2 time grid and concatenate channels before
+  a shared temporal front end and backbone.
+aligned: concatenate TCM-compressed, slot-aligned features and apply a 1x1
+  convolution before the shared backbone.
+late: concatenate per-modality decoder features, then predict from their
+  fused representation; per-modality heads receive auxiliary supervision.
+decision: average the per-modality prediction logits.
+cross_s2: S2-centered temporal cross-attention over the other modalities.
+cross_nn: each modality attends to the others over TCM slots.
+sacf: slot-aligned cross-modal fusion via SACF.
+
+TCM compresses each input time series to four temporal slots when enabled.
+The rest of the network includes the U-TAE temporal encoder for both TCM
+and non-TCM configurations.
+
+Complete ID list
+----------------
+ ID   Experiment name                       Fusion       TCM   Window
+----  ------------------------------------  -----------  ----  ------
+
+[S2] S2 (optical)
+   1  exp001_S2_single_notcm                single       no    full
+   2  exp002_S2_single_notcm_3m             single       no    3m
+   3  exp003_S2_single_notcm_6m             single       no    6m
+   4  exp004_S2_single_tcm                  single       yes   full
+   5  exp005_S2_single_tcm_3m               single       yes   3m
+   6  exp006_S2_single_tcm_6m               single       yes   6m
+
+[S1A] S1A (ascending SAR)
+   7  exp007_S1A_single_notcm               single       no    full
+   8  exp008_S1A_single_notcm_3m            single       no    3m
+   9  exp009_S1A_single_notcm_6m            single       no    6m
+  10  exp010_S1A_single_tcm                 single       yes   full
+  11  exp011_S1A_single_tcm_3m              single       yes   3m
+  12  exp012_S1A_single_tcm_6m              single       yes   6m
+
+[S1D] S1D (descending SAR)
+  13  exp013_S1D_single_notcm               single       no    full
+  14  exp014_S1D_single_notcm_3m            single       no    3m
+  15  exp015_S1D_single_notcm_6m            single       no    6m
+  16  exp016_S1D_single_tcm                 single       yes   full
+  17  exp017_S1D_single_tcm_3m              single       yes   3m
+  18  exp018_S1D_single_tcm_6m              single       yes   6m
+
+[N3] N3 (S2 + S1A + S1D)
+  19  exp019_N3_early_notcm                 early        no    full
+  20  exp020_N3_early_notcm_3m              early        no    3m
+  21  exp021_N3_early_notcm_6m              early        no    6m
+  22  exp022_N3_late_notcm                  late         no    full
+  23  exp023_N3_late_notcm_3m               late         no    3m
+  24  exp024_N3_late_notcm_6m               late         no    6m
+  25  exp025_N3_decision_notcm              decision     no    full
+  26  exp026_N3_decision_notcm_3m           decision     no    3m
+  27  exp027_N3_decision_notcm_6m           decision     no    6m
+  28  exp028_N3_cross_s2_notcm              cross_s2     no    full
+  29  exp029_N3_cross_s2_notcm_3m           cross_s2     no    3m
+  30  exp030_N3_cross_s2_notcm_6m           cross_s2     no    6m
+  31  exp031_N3_early_tcm                   early        yes   full
+  32  exp032_N3_early_tcm_3m                early        yes   3m
+  33  exp033_N3_early_tcm_6m                early        yes   6m
+  34  exp034_N3_aligned_tcm                 aligned      yes   full
+  35  exp035_N3_aligned_tcm_3m              aligned      yes   3m
+  36  exp036_N3_aligned_tcm_6m              aligned      yes   6m
+  37  exp037_N3_late_tcm                    late         yes   full
+  38  exp038_N3_late_tcm_3m                 late         yes   3m
+  39  exp039_N3_late_tcm_6m                 late         yes   6m
+  40  exp040_N3_decision_tcm                decision     yes   full
+  41  exp041_N3_decision_tcm_3m             decision     yes   3m
+  42  exp042_N3_decision_tcm_6m             decision     yes   6m
+  43  exp043_N3_cross_s2_tcm                cross_s2     yes   full
+  44  exp044_N3_cross_s2_tcm_3m             cross_s2     yes   3m
+  45  exp045_N3_cross_s2_tcm_6m             cross_s2     yes   6m
+  46  exp046_N3_cross_nn_tcm                cross_nn     yes   full
+  47  exp047_N3_cross_nn_tcm_3m             cross_nn     yes   3m
+  48  exp048_N3_cross_nn_tcm_6m             cross_nn     yes   6m
+  49  exp049_N3_sacf_tcm                    sacf         yes   full
+  50  exp050_N3_sacf_tcm_3m                 sacf         yes   3m
+  51  exp051_N3_sacf_tcm_6m                 sacf         yes   6m
+
+[N5] N5 (S2 + S1A + S1D + S1ABcoh + S1DBcoh)
+  52  exp052_N5_early_notcm                 early        no    full
+  53  exp053_N5_early_notcm_3m              early        no    3m
+  54  exp054_N5_early_notcm_6m              early        no    6m
+  55  exp055_N5_late_notcm                  late         no    full
+  56  exp056_N5_late_notcm_3m               late         no    3m
+  57  exp057_N5_late_notcm_6m               late         no    6m
+  58  exp058_N5_decision_notcm              decision     no    full
+  59  exp059_N5_decision_notcm_3m           decision     no    3m
+  60  exp060_N5_decision_notcm_6m           decision     no    6m
+  61  exp061_N5_cross_s2_notcm              cross_s2     no    full
+  62  exp062_N5_cross_s2_notcm_3m           cross_s2     no    3m
+  63  exp063_N5_cross_s2_notcm_6m           cross_s2     no    6m
+  64  exp064_N5_early_tcm                   early        yes   full
+  65  exp065_N5_early_tcm_3m                early        yes   3m
+  66  exp066_N5_early_tcm_6m                early        yes   6m
+  67  exp067_N5_aligned_tcm                 aligned      yes   full
+  68  exp068_N5_aligned_tcm_3m              aligned      yes   3m
+  69  exp069_N5_aligned_tcm_6m              aligned      yes   6m
+  70  exp070_N5_late_tcm                    late         yes   full
+  71  exp071_N5_late_tcm_3m                 late         yes   3m
+  72  exp072_N5_late_tcm_6m                 late         yes   6m
+  73  exp073_N5_decision_tcm                decision     yes   full
+  74  exp074_N5_decision_tcm_3m             decision     yes   3m
+  75  exp075_N5_decision_tcm_6m             decision     yes   6m
+  76  exp076_N5_cross_s2_tcm                cross_s2     yes   full
+  77  exp077_N5_cross_s2_tcm_3m             cross_s2     yes   3m
+  78  exp078_N5_cross_s2_tcm_6m             cross_s2     yes   6m
+  79  exp079_N5_cross_nn_tcm                cross_nn     yes   full
+  80  exp080_N5_cross_nn_tcm_3m             cross_nn     yes   3m
+  81  exp081_N5_cross_nn_tcm_6m             cross_nn     yes   6m
+  82  exp082_N5_sacf_tcm                    sacf         yes   full
+  83  exp083_N5_sacf_tcm_3m                 sacf         yes   3m
+  84  exp084_N5_sacf_tcm_6m                 sacf         yes   6m
+
+[hybrid] hybrid (S2 + S1A/coherence + S1D/coherence)
+  85  exp085_hybrid_early_notcm             early        no    full
+  86  exp086_hybrid_early_notcm_3m          early        no    3m
+  87  exp087_hybrid_early_notcm_6m          early        no    6m
+  88  exp088_hybrid_late_notcm              late         no    full
+  89  exp089_hybrid_late_notcm_3m           late         no    3m
+  90  exp090_hybrid_late_notcm_6m           late         no    6m
+  91  exp091_hybrid_decision_notcm          decision     no    full
+  92  exp092_hybrid_decision_notcm_3m       decision     no    3m
+  93  exp093_hybrid_decision_notcm_6m       decision     no    6m
+  94  exp094_hybrid_cross_s2_notcm          cross_s2     no    full
+  95  exp095_hybrid_cross_s2_notcm_3m       cross_s2     no    3m
+  96  exp096_hybrid_cross_s2_notcm_6m       cross_s2     no    6m
+  97  exp097_hybrid_early_tcm               early        yes   full
+  98  exp098_hybrid_early_tcm_3m            early        yes   3m
+  99  exp099_hybrid_early_tcm_6m            early        yes   6m
+ 100  exp100_hybrid_aligned_tcm             aligned      yes   full
+ 101  exp101_hybrid_aligned_tcm_3m          aligned      yes   3m
+ 102  exp102_hybrid_aligned_tcm_6m          aligned      yes   6m
+ 103  exp103_hybrid_late_tcm                late         yes   full
+ 104  exp104_hybrid_late_tcm_3m             late         yes   3m
+ 105  exp105_hybrid_late_tcm_6m             late         yes   6m
+ 106  exp106_hybrid_decision_tcm            decision     yes   full
+ 107  exp107_hybrid_decision_tcm_3m         decision     yes   3m
+ 108  exp108_hybrid_decision_tcm_6m         decision     yes   6m
+ 109  exp109_hybrid_cross_s2_tcm            cross_s2     yes   full
+ 110  exp110_hybrid_cross_s2_tcm_3m         cross_s2     yes   3m
+ 111  exp111_hybrid_cross_s2_tcm_6m         cross_s2     yes   6m
+ 112  exp112_hybrid_cross_nn_tcm            cross_nn     yes   full
+ 113  exp113_hybrid_cross_nn_tcm_3m         cross_nn     yes   3m
+ 114  exp114_hybrid_cross_nn_tcm_6m         cross_nn     yes   6m
+ 115  exp115_hybrid_sacf_tcm                sacf         yes   full
+ 116  exp116_hybrid_sacf_tcm_3m             sacf         yes   3m
+ 117  exp117_hybrid_sacf_tcm_6m             sacf         yes   6m

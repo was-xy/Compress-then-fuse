@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+
+results/
+synthetic/
+*.pth.tar
+*.pkl
+*.log
+
+.idea/
+.vscode/
+.DS_Store
